@@ -1,3 +1,14 @@
 body {
     font-family: sans-serif
 }
+h2 {
+}
+
+#two {
+    background-color:#e2e2e2;
+}
+
+#one {
+    background-color: #087ee5;
+    color:azure
+}
