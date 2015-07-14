@@ -1,14 +1,25 @@
-body {
-    font-family: sans-serif
+@import url(http://fonts.googleapis.com/css?family=Merriweather:400,900);
+
+html, button, input, select, textarea,
+.pure-g [class *= "pure-u"] {
+    /* Set your content font stack here: */
+    font-family: 'Merriweather', serif;
 }
-h2 {
+
+
+#one {
+    background-color: #F44336;
+    color:white;
 }
 
 #two {
-    background-color:#e2e2e2;
+    background-color:#f9f9f9;
 }
 
-#one {
-    background-color: #087ee5;
-    color:white;
+#user-table {
+    width:100%;
+}
+
+.inner-offset {
+    margin-left:1em;
 }

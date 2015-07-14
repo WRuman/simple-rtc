@@ -18,9 +18,62 @@
         <div class="pure-g">
             <div id="one" class="pure-u-1 pure-u-md-1-3">
                 <h1>simpleRTC</h1>
+                <p>Created by <a href="http://willruman.me" target="blank" >Will Ruman</a></p>
             </div>
-            <div id="two" class="pure-u-1 pure-u-md-2-3" ng-controller="signal_channel_ctrl">
-                <h2>{{channelStatus}}</h2>
+            <div id="two" class="pure-u-1 pure-u-md-2-3" ng-controller="chat_channel_ctrl">
+                <div class="inner-offset">
+                    <p>Status: {{channelStatus}}</p>
+                    <p>Enter your desired username to begin</p>
+                    <form class="pure-form" ng-show="showForm">
+                        <fieldset>
+                            <input type="text" id="username" ng-model="username" placeholder="Username">
+                            <button type="button" 
+                                    class="pure-button pure-button-primary"
+                                    ng-click="signup()">Start</button>
+                        </fieldset>
+                    </form>
+                    <h3 ng-hide="showForm">Signed in as {{username}}</h3>
+                    
+                    <table class="pure-table-horizontal" id="user-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Signup Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="(id, user) in users">
+                                <td>{{user.name}}</td>
+                                <td>{{dstring(user.signup_time)}}</td>
+                                <td>
+                                    <button class="pure-button">Start Video Chat</button>
+                                    <button class="pure-button"
+                                            ng-click="sendMessage(id)">Send Message</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="three" class="pure-u-1" ng-controller="chat_channel_ctrl">
+                <h3>Messages</h3>
+                <table class="pure-table-horizontal" id="user-table">
+                    <thead>
+                        <tr>
+                            <th>From</th>
+                            <th>Time</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="message in messages">
+                            <td>{{message.from}}</td>
+                            <td>{{dstring(message.time_sent)}}</td>
+                            <td>{{message.text}}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </body>
