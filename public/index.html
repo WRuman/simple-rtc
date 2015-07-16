@@ -13,7 +13,7 @@
         <script src="js/controllers.js"></script>
         <script src="js/services.js"></script>
         <!--<script type="text/javascript" src="js/getUserMedia.shim.js"></script>-->
-        <script type="text/javascript" src="js/attachStream.shim.js"></script>
+        <!--<script type="text/javascript" src="js/attachStream.shim.js"></script>-->
         <script type="text/javascript" src="js/adapter.js"></script>
         <title>simpleRTC</title>
     </head>
@@ -56,7 +56,8 @@
                                 <td>{{user.name}}</td>
                                 <td>{{dstring(user.signup_time)}}</td>
                                 <td>
-                                    <button class="pure-button button-success button-small">Video Chat</button>
+                                    <button class="pure-button button-success button-small"
+                                            ng-click="startVideoChat(id)">Video Chat</button>
                                     <button class="pure-button pure-button-primary button-small"
                                             ng-click="sendMessage(id)">Send Message</button>
                                 </td>

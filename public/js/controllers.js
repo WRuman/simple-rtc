@@ -81,6 +81,10 @@ simpleRTC.controller('video_feed_ctrl',
 ['$scope', '$rootScope', 'rtc_peer_pipeline',
 function($scope, $rootScope, rtc_peer_pipeline){
     var localStream;
+    var remoteVideo = document.getElementById('remote-video');
+    remoteVideo.autoplay = true;
+    rtc_peer_pipeline.setRemoteVideoElement(remoteVideo);
+    
     window.getUserMedia({'audio' : true, 'video' : true},
         function(stream) {
             localStream = stream;
@@ -88,16 +92,18 @@ function($scope, $rootScope, rtc_peer_pipeline){
             vidElement.autoplay = true;
             vidElement.muted = true;
             window.attachMediaStream(vidElement, stream);
+            rtc_peer_pipeline.setLocalStream(localStream);
         },
         function(error) {
             console.error(error);
         }
     );
     
-    $rootScope.$on('video_call:start', function(params) {
-        var remoteVideo = document.getElementById('remote-video');
-        rtc_peer_pipeline.setLocalStream(localStream);
-        rtc_peer_pipeline.setRemoteVideoElement(remoteVideo);
-        rtc_peer_pipeline.makeOfferToUserId(params.targetID);
+    $rootScope.$on('video_call:start', function(event, params) {
+        console.log("Signal target: ");
+        console.log(params);
+        if(params.targetID) {
+            rtc_peer_pipeline.makeOfferToUserId(params.targetID);   
+        }
     });
 }]);

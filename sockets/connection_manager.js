@@ -39,6 +39,7 @@ module.exports = {
             });
             
             socket.on('rtc:signal', function(data) {
+                //console.log("Signal target: " + data.to);
                 if(users[data.to] && userSockets[data.to]) {
                     data.from = socket.id;
                     userSockets[data.to].emit('rtc:signal', data);

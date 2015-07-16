@@ -40,6 +40,7 @@ angular.module('simpleRTC').factory('rtc_peer_pipeline',
         var caller = false;
         var targetID;
         var localStream;
+        var localStreamAdded = false;
         var remoteVideoElement;
         var pc;
         
@@ -51,23 +52,64 @@ angular.module('simpleRTC').factory('rtc_peer_pipeline',
             remoteVideoElement = relement;
         };
         
+        function popError(content) {
+            console.error('Error:');
+            console.error(content);
+        }
+        
+        
         pipe.makeOfferToUserId = function(userID) {
             caller = true;
             targetID = userID;
+            if(!pc) {
+                createPeerConnection();
+            }
+            if(localStream) {
+                pc.addStream(localStream);   
+            }
+
+            pc.createOffer(setLocalAndOffer, popError, {
+                // SDP options
+                'offerToReceiveAudio' : true,
+                'offerToReceiveVideo' : true
+            });
         };
         
-        function applyLocalSessionDescription(offer) {
-            pc.setLocalDescription(offer, function(){
+        function setLocalAndOffer(offerSDP) {
+            pc.setLocalDescription(offerSDP, function(){
+                console.info("Sending offer to " + targetID);
                 socket_svc.emit('rtc:signal', {
+                    'to' : targetID,
                     'type' : 'offer',
-                    'payload' : pc.localDescription
+                    'offer' : offerSDP
                 });
             }, function(error) {
                 if(error) {
-                    console.error("Error setting local description:");
+                    console.error("Error setting local description on offer:");
                     console.error(error);
                 }
             });
+        }
+        
+        function setLocalAndAnswer() {
+            pc.createAnswer(function(answerSDP) {
+                pc.setLocalDescription(answerSDP, function(){
+                    console.info("Sending answer to " + targetID);
+                    socket_svc.emit('rtc:signal', {
+                        'to' : targetID,
+                        'type' : 'answer',
+                        'answer' : answerSDP
+                    });
+                }, function(error) {
+                    console.error("Error setting local description on answer:");
+                    console.error(error);
+                });
+            });
+        }
+        
+        function setRemoteDescription(description) {
+            var remoteDescription = new window.RTCSessionDescription(description);
+            pc.setRemoteDescription(remoteDescription);
         }
         
         function createPeerConnection() {
@@ -75,12 +117,13 @@ angular.module('simpleRTC').factory('rtc_peer_pipeline',
                 'iceServers' : [
                     {
                         'url' : 'stun:stun.l.google.com:19302'
-                    }    
+                    }
                 ]
             };
             pc = new window.RTCPeerConnection(peerConnectionConfig);
-            
-            pc.onIceCandidate = function(event) {
+            console.info("Created new peer connection:");
+            console.info(pc);
+            pc.onicecandidate = function(event) {
                 console.info("ICE Candidate:");
                 console.info(event.candidate);
                 if(event.candidate) {
@@ -95,19 +138,6 @@ angular.module('simpleRTC').factory('rtc_peer_pipeline',
                     console.info('End of candidates reached');
                 }
             };
-            
-            if(caller) {
-                pc.createOffer(applyLocalSessionDescription, function(error) {
-                    if(error) {
-                        console.error("Error creating offer:");
-                        console.error(error);
-                    }
-                }, {
-                    // SDP options
-                    'offerToReceiveAudio' : true,
-                    'offerToReceiveVideo' : true
-                });
-            }
             
             pc.onconnecting = function(cnct) {
                 console.info("Connecting:");
@@ -128,20 +158,33 @@ angular.module('simpleRTC').factory('rtc_peer_pipeline',
             };
         }
         
-        function enterPipeline() {
-            if(!started && localStream && remoteVideoElement) {
-                createPeerConnection();
-                pc.addStream(localStream);
-                started = true;
-            }
-        }
-        
+
         socket_svc.on('rtc:signal', function(message) {
             switch (message.type) {
                 case 'offer' :
-                    if(!caller && !started) {
-                        enterPipeline();
+                    targetID = message.from;
+                    if(!pc) {
+                        createPeerConnection();
                     }
+                    if(!localStreamAdded && localStream) {
+                        pc.addStream(localStream);
+                        localStreamAdded = true;
+                    }
+                    setRemoteDescription(message.offer);
+                    setLocalAndAnswer();
+                    break;
+                case 'answer' :
+                    console.info("Answer received");
+                    console.info(message);
+                    setRemoteDescription(message.answer);
+                    break;
+                case 'candidate' :
+                    var newCandidate = new window.RTCIceCandidate({
+                        'sdpMLineIndex' : message.label,
+                        'sdpMid' : message.id,
+                        'candidate' : message.candidate
+                    });
+                    pc.addIceCandidate(newCandidate);
                     break;
             }
         });
