@@ -1,8 +1,8 @@
 var simpleRTC = angular.module('simpleRTC', []);
 
 simpleRTC.controller('chat_channel_ctrl', 
-    ['$scope', 'socket_svc',
-    function($scope, socket_svc){
+    ['$scope', '$rootScope', 'socket_svc',
+    function($scope, $rootScope, socket_svc){
         $scope.channelStatus = "Not connected";
         $scope.users = {};
         $scope.username = '';
@@ -36,6 +36,12 @@ simpleRTC.controller('chat_channel_ctrl',
             }
         };
         
+        $scope.signout = function() {
+            socket_svc.emit('users:delete', {'name' : $scope.username});
+            $scope.username = '';
+            $scope.showForm = true;
+        };
+        
         $scope.sendMessage = function(userID) {
             var username = $scope.users[userID].name;
             var message = window.prompt("Message to " + username, "Hey!");
@@ -44,13 +50,20 @@ simpleRTC.controller('chat_channel_ctrl',
             }
         };
         
+        $scope.startVideoChat = function(userID) {
+            $rootScope.$emit('video_call:start', {'targetID' : userID});  
+        };
+        
         socket_svc.on('messages:incoming', function(msg) {
-            //msg.from = $scope.users[msg.from].name;
-           $scope.messages.push(msg); 
+            if($scope.users[msg.from]) {
+                msg.from = $scope.users[msg.from].name;
+            }
+            $scope.messages.push(msg); 
         });
         
         $scope.dstring = function(epoch) {
-            return (new Date(epoch)).toLocaleDateString();
+            var d = new Date(epoch);
+            return d.toLocaleTimeString() + " on " + d.toLocaleDateString();
         };
 
         $scope.$on('destroy', function(event) {
@@ -59,5 +72,32 @@ simpleRTC.controller('chat_channel_ctrl',
             socket.removeAllListeners('users:list');
             socket.removeAllListeners('users:add');
             socket.removeAllListeners('users:delete');
+            socket.removeAllListeners('messages:incoming');
+            socket.removeAllListeners('disconnect');
         });
+}]);
+
+simpleRTC.controller('video_feed_ctrl', 
+['$scope', '$rootScope', 'rtc_peer_pipeline',
+function($scope, $rootScope, rtc_peer_pipeline){
+    var localStream;
+    window.getUserMedia({'audio' : true, 'video' : true},
+        function(stream) {
+            localStream = stream;
+            var vidElement = document.getElementById('my-video');
+            vidElement.autoplay = true;
+            vidElement.muted = true;
+            window.attachMediaStream(vidElement, stream);
+        },
+        function(error) {
+            console.error(error);
+        }
+    );
+    
+    $rootScope.$on('video_call:start', function(params) {
+        var remoteVideo = document.getElementById('remote-video');
+        rtc_peer_pipeline.setLocalStream(localStream);
+        rtc_peer_pipeline.setRemoteVideoElement(remoteVideo);
+        rtc_peer_pipeline.makeOfferToUserId(params.targetID);
+    });
 }]);

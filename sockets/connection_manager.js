@@ -1,5 +1,4 @@
-var io = require('socket.io');
-
+var io;
 var users = {};
 var userSockets = {};
 
@@ -11,7 +10,7 @@ module.exports = {
             socket.emit('users:list', users);
             
             socket.on('messages:send', function(data) {
-                if(data.to && data.text && userSockets[data.to]) {
+                if(data.to && data.text && userSockets[data.to] && users[socket.id]) {
                     var now = Date.now();
                     userSockets[data.to].emit('messages:incoming', {'from' : socket.id, 'text' : data.text, 'time_sent' : now});
                 }
@@ -32,6 +31,18 @@ module.exports = {
             socket.on('disconnect', function(data) {
                 delete users[socket.id];
                 io.sockets.emit('users:delete', {'id' : socket.id}); 
+            });
+            
+            socket.on('users:delete', function(data) {
+                delete users[socket.id];
+                socket.broadcast.emit('users:delete', {'id' : socket.id});
+            });
+            
+            socket.on('rtc:signal', function(data) {
+                if(users[data.to] && userSockets[data.to]) {
+                    data.from = socket.id;
+                    userSockets[data.to].emit('rtc:signal', data);
+                }
             });
         });
     }  

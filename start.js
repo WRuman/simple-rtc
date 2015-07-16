@@ -4,7 +4,6 @@ var HOST = process.env.IP || "localhost";
 var express = require("express");
 var bodyParser = require("body-parser");
 var socketManager = require('./sockets/connection_manager');
-var io;
 
 var app = express();
 app.use(express.static('public'));
