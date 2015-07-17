@@ -38,6 +38,13 @@ module.exports = {
                 socket.broadcast.emit('users:delete', {'id' : socket.id});
             });
             
+            socket.on('rtc:ring', function(data) {
+                if(users[data.to] && userSockets[data.to]) {
+                    data.from = socket.id;
+                    userSockets[data.to].emit('rtc:ring', data);
+                }
+            });
+            
             socket.on('rtc:signal', function(data) {
                 //console.log("Signal target: " + data.to);
                 if(users[data.to] && userSockets[data.to]) {
