@@ -34,6 +34,7 @@ html, button, input, select, textarea,
 
 #their-video {
     width:100%;
+    min-height:240px;
     position:absolute;
     top:0;
     left:0;
