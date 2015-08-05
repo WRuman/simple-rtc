@@ -7,6 +7,7 @@ module.exports = {
         io = require('socket.io')(server);
         
         io.on('connection', function(socket) {
+            
             socket.emit('users:list', users);
             
             socket.on('messages:send', function(data) {

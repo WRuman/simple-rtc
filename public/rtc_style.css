@@ -8,8 +8,16 @@ html, button, input, select, textarea,
 
 
 #one {
-    background-color: #2196F3;
-    color:white;
+    background-color: white;
+    color:#2e2e2e;
+}
+
+.selected {
+    background-color: orange;
+}
+
+#one input {
+    color: #2e2e2e;
 }
 
 #two {
